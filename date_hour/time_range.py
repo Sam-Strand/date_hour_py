@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Union
 from pydantic_core import core_schema
-from pydantic import GetCoreSchemaHandler
 from date_hour import DateHour
+from pydantic import GetCoreSchemaHandler
 
 
 class TimeRange:
@@ -45,18 +45,20 @@ class TimeRange:
         cls,
         source: type,
         handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        def validate(value) -> 'TimeRange':
-            if isinstance(value, cls):
-                return value
-            return cls(value)
-
+    ):
         return core_schema.no_info_plain_validator_function(
-            function=validate,
+            function=cls._validate,
             serialization=core_schema.plain_serializer_function_ser_schema(
-                lambda v: {
-                    'start': str(v.start),
-                    'stop': str(v.stop)
-                }
-            )
+                lambda v: {'start': str(v.start), 'stop': str(v.stop)}
+            ),
         )
+
+    @classmethod
+    def _validate(cls, v):
+        if isinstance(v, cls):
+            return v
+        if isinstance(v, dict):
+            return cls(v['start'], v.get('stop'))
+        if isinstance(v, (list, tuple)):
+            return cls(*v)
+        return cls(v)
