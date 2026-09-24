@@ -5,7 +5,7 @@ from date_hour import DateHour
 from pydantic import GetCoreSchemaHandler
 
 
-class TimeRange:
+class HourRange(dict):
     '''
     Класс для работы с временными диапазонами.
     start и stop - это DateHour объекты (точки в времени).
@@ -14,31 +14,35 @@ class TimeRange:
 
     def __init__(self, start: Union[str, datetime, DateHour],
                  stop: Union[str, datetime, DateHour] = None):
-        '''
-        Создает временной диапазон.
+        start_dh = DateHour(start)
+        stop_dh = start_dh + 1 if stop is None else DateHour(stop)
+        super().__init__(start=str(start_dh), stop=str(stop_dh))
 
-        Args:
-            start: Начало диапазона
-            stop: Конец диапазона (опционально)
-                  Если не указан, создается диапазон из одного часа
-        '''
-        self.start = DateHour(start)
+    @property
+    def start(self) -> DateHour:
+        return DateHour(self['start'])
 
-        if stop is None:
-            self.stop = self.start + 1
-        else:
-            self.stop = DateHour(stop)
+    @property
+    def stop(self) -> DateHour:
+        return DateHour(self['stop'])
 
     def __str__(self) -> str:
-        return f"TimeRange({self.start} - {self.stop})"
+        return f"HourRange({self.start} - {self.stop})"
 
-    def __len__(self) -> int:
+    def __repr__(self) -> str:
+        return f"HourRange({self.start} - {self.stop})"
+
+    def hours(self) -> int:
         '''Количество часов в диапазоне'''
-        start_dt = self.start._get_datetime()
-        stop_dt = self.stop._get_datetime()
-
-        diff = (stop_dt - start_dt).total_seconds() / 3600
+        diff = (self.stop._get_datetime() - self.start._get_datetime()).total_seconds() / 3600
         return max(0, int(diff))
+    
+    def __len__(self) -> int:
+        diff = (self.stop._get_datetime() - self.start._get_datetime()).total_seconds() / 3600
+        return max(0, int(diff))
+    
+    def __bool__(self) -> bool:
+        return self.__len__() > 0
 
     @classmethod
     def __get_pydantic_core_schema__(
