@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Union
 from pydantic_core import core_schema
-from date_hour import DateHour
 from pydantic import GetCoreSchemaHandler
+
+from .date_hour import DateHour
 
 
 class HourRange(dict):
